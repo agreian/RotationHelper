@@ -225,7 +225,7 @@ namespace RotationHelper.ViewModel
         {
             if (IsStarted) StartStopAction();
 
-            if (!IsSaveNeeded()) return;
+            if (LoadedFilePath != null && IsSaveNeeded() == false) return;
 
             var result = MessageBox.Show("Your modifications will be lost, do you want to save ?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes) SaveAction();
