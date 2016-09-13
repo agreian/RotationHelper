@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Threading;
 using System.Timers;
 using System.Windows;
@@ -41,7 +42,7 @@ namespace RotationHelper.ViewModel
         private bool _isStarted;
         private byte[] _loadedFileByteArray;
         private string _loadedFilePath;
-        private Rotation _selectedRotation;
+        private Overlay _overlay;
         private Hotkey _startStopHotkey;
 
         #endregion
@@ -76,6 +77,8 @@ namespace RotationHelper.ViewModel
         #endregion
 
         #region Properties
+
+        public static Rotation StaticSelectedRotation { get; private set; }
 
         public RotationHelperFile CurrentRotationHelperFile { get; set; }
 
@@ -132,10 +135,10 @@ namespace RotationHelper.ViewModel
 
         public Rotation SelectedRotation
         {
-            get { return _selectedRotation; }
+            get { return StaticSelectedRotation; }
             set
             {
-                _selectedRotation = value;
+                StaticSelectedRotation = value;
                 RaisePropertyChanged(() => SelectedRotation);
             }
         }
@@ -283,14 +286,14 @@ namespace RotationHelper.ViewModel
             index++;
             SelectedRotation = index >= CurrentRotationHelperFile.Rotations.Count || index == -1 ? CurrentRotationHelperFile.Rotations.First() : CurrentRotationHelperFile.Rotations[index];
 
-            System.Media.SystemSounds.Asterisk.Play();
+            SystemSounds.Asterisk.Play();
         }
 
         private void OnStartStopHotkeyPressed(object sender, HotkeyEventArgs e)
         {
             StartStopAction();
 
-            System.Media.SystemSounds.Beep.Play();
+            SystemSounds.Beep.Play();
         }
 
         private void RotationTimerOnElapsed(object sender, ElapsedEventArgs e)
@@ -302,6 +305,8 @@ namespace RotationHelper.ViewModel
             _rotationTimer.Stop();
 
             Thread.Sleep(_timerRandom.Next(0, 81));
+
+            if (SelectedRotation.KeyCommands.Count == 0) Application.Current.Dispatcher.BeginInvoke((Action)(() => LoggingTextBox.AppendText($"Selected rotation has no configured key, please edit it!{Environment.NewLine}")));
 
             var points = SelectedRotation.KeyCommands.Select(x => new Point(x.X, x.Y)).Distinct().ToArray();
 
@@ -317,7 +322,7 @@ namespace RotationHelper.ViewModel
 
                 foreach (var key in keys)
                 {
-                    Application.Current.Dispatcher.BeginInvoke((Action)(() => LoggingTextBox.AppendText($"Color {color} detected, pressing {key.Key}{Environment.NewLine}")));
+                    Application.Current.Dispatcher.BeginInvoke((Action)(() => LoggingTextBox.AppendText($"Color {color} detected, pressing {key.Key} ({key.Name}){Environment.NewLine}")));
                     KeyPress(key.Key);
                 }
             }
@@ -369,10 +374,14 @@ namespace RotationHelper.ViewModel
             if (IsStarted) // Stop
             {
                 _rotationTimer.Start();
+                _overlay = new Overlay();
+                _overlay.Show();
             }
             else
             {
                 _rotationTimer.Stop();
+                _overlay.Close();
+                _overlay = null;
             }
 
             _semaphore.Release();
