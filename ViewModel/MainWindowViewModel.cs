@@ -282,11 +282,15 @@ namespace RotationHelper.ViewModel
             var index = CurrentRotationHelperFile.Rotations.IndexOf(SelectedRotation);
             index++;
             SelectedRotation = index >= CurrentRotationHelperFile.Rotations.Count || index == -1 ? CurrentRotationHelperFile.Rotations.First() : CurrentRotationHelperFile.Rotations[index];
+
+            System.Media.SystemSounds.Asterisk.Play();
         }
 
         private void OnStartStopHotkeyPressed(object sender, HotkeyEventArgs e)
         {
             StartStopAction();
+
+            System.Media.SystemSounds.Beep.Play();
         }
 
         private void RotationTimerOnElapsed(object sender, ElapsedEventArgs e)
