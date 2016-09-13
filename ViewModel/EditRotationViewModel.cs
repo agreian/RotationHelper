@@ -1,7 +1,14 @@
-using System.Linq;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
+using RotationHelper.Helper;
 using RotationHelper.Model;
+using RotationHelper.View;
+using System;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+using Color = System.Windows.Media.Color;
+using Timer = System.Timers.Timer;
 
 namespace RotationHelper.ViewModel
 {
@@ -9,6 +16,10 @@ namespace RotationHelper.ViewModel
     {
         #region Fields
 
+        private readonly Timer _mousePositionColorTimer = new Timer();
+
+        private Point _mousePosition = new Point();
+        private Color _mousePositionColor;
         private KeyCommand _selectedKeyCommand;
         private Rotation _selectedRotation;
 
@@ -16,7 +27,7 @@ namespace RotationHelper.ViewModel
 
         #region Constructors
 
-        public EditRotationViewModel(RotationHelperFile rotationHelperFile)
+        public EditRotationViewModel(EditRotationWindow editRotationWindow, RotationHelperFile rotationHelperFile)
         {
             RotationHelperFile = rotationHelperFile;
 
@@ -27,6 +38,12 @@ namespace RotationHelper.ViewModel
 
             if (RotationHelperFile.Rotations.Count == 0) AddRotationAction();
             SelectedRotation = RotationHelperFile.Rotations.First();
+
+            _mousePositionColorTimer.Interval = 200;
+            _mousePositionColorTimer.Elapsed += MousePositionColorTimerOnElapsed;
+            _mousePositionColorTimer.Start();
+
+            editRotationWindow.Closing += EditRotationWindowOnClosing;
         }
 
         #endregion
@@ -36,6 +53,8 @@ namespace RotationHelper.ViewModel
         public RelayCommand AddKeyCommand { get; }
 
         public RelayCommand AddRotationCommand { get; }
+
+        public string MousePixelColor => $"Red: {_mousePositionColor.R}, Green: {_mousePositionColor.G}, Blue: {_mousePositionColor.B} at ({_mousePosition.X}:{_mousePosition.Y})";
 
         public RelayCommand RemoveKeyCommand { get; }
 
@@ -81,6 +100,21 @@ namespace RotationHelper.ViewModel
             RotationHelperFile.Rotations.Add(new Rotation { Title = $"Rotation {RotationHelperFile.Rotations.Count + 1}" });
 
             if (SelectedRotation == null) SelectedRotation = RotationHelperFile.Rotations.First();
+        }
+
+        private void EditRotationWindowOnClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            _mousePositionColorTimer.Stop();
+            _mousePositionColorTimer.Close();
+            _mousePositionColorTimer.Dispose();
+        }
+
+        private void MousePositionColorTimerOnElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            _mousePosition = Cursor.Position;
+            _mousePositionColor = ScreenshotHelper.GetColorAt(_mousePosition).First();
+
+            System.Windows.Application.Current.Dispatcher.BeginInvoke((Action)(() => RaisePropertyChanged(() => MousePixelColor)));
         }
 
         private void RemoveKeyAction()

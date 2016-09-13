@@ -43,19 +43,20 @@
         </StackPanel>
 
         <DockPanel Margin="10" Grid.Row="3">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                <Button Margin="0,0,5,5" Content="Add Key" Command="{Binding AddKeyCommand}" />
-                <Button Margin="5,0,5,5" Content="Remove Key" Command="{Binding RemoveKeyCommand}" />
-            </StackPanel>
+            <DockPanel DockPanel.Dock="Top">
+                <Button DockPanel.Dock="Left" Margin="0,0,5,5" Content="Add Key" Command="{Binding AddKeyCommand}" />
+                <Button DockPanel.Dock="Left" Margin="5,0,5,5" Content="Remove Key" Command="{Binding RemoveKeyCommand}" />
+                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" TextAlignment="Right" Text="{Binding MousePixelColor}" />
+            </DockPanel>
             <DataGrid DockPanel.Dock="Bottom" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False"
                       CanUserResizeRows="False" HeadersVisibility="Column" SelectionMode="Single" SelectedItem="{Binding SelectedKeyCommand}" ItemsSource="{Binding SelectedRotation.KeyCommands}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="100" />
                     <DataGridTextColumn Header="X" Binding="{Binding X}" Width="40" />
                     <DataGridTextColumn Header="Y" Binding="{Binding Y}" Width="40" />
-                    <DataGridTextColumn Header="Red" Binding="{Binding Red}" Width="40" />
-                    <DataGridTextColumn Header="Green" Binding="{Binding Green}" Width="40" />
-                    <DataGridTextColumn Header="Blue" Binding="{Binding Blue}" Width="40" />
+                    <DataGridTextColumn Header="Red" Binding="{Binding Red}" Width="45" />
+                    <DataGridTextColumn Header="Green" Binding="{Binding Green}" Width="45" />
+                    <DataGridTextColumn Header="Blue" Binding="{Binding Blue}" Width="45" />
                     <DataGridTemplateColumn Header="Color" Width="*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="model:KeyCommand">

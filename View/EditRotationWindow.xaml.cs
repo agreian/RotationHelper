@@ -14,7 +14,7 @@ namespace RotationHelper.View
         {
             InitializeComponent();
 
-            DataContext = new EditRotationViewModel(rotationHelperFile);
+            DataContext = new EditRotationViewModel(this, rotationHelperFile);
         }
 
         #endregion
