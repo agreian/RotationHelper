@@ -1,0 +1,73 @@
+﻿<Window x:Class="RotationHelper.EditRotationWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:local="clr-namespace:RotationHelper" mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance local:EditRotationViewModel}" Title="Edit Rotation" MinHeight="500" MinWidth="350" Height="500" Width="350">
+    <Grid>
+        <Grid.Resources>
+            <Style TargetType="Button">
+                <Setter Property="MinWidth" Value="80" />
+                <Setter Property="Padding" Value="5,2" />
+            </Style>
+        </Grid.Resources>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Margin="10" Grid.Row="0" Orientation="Vertical">
+            <TextBlock Text="Title:" />
+            <TextBox Text="{Binding RotationHelperFile.Title}" />
+        </StackPanel>
+
+        <StackPanel Margin="10" Grid.Row="1" Orientation="Vertical">
+            <TextBlock Text="Selected rotation:" />
+            <StackPanel Orientation="Horizontal">
+                <ComboBox MinWidth="100" Margin="0,0,5,0" SelectedItem="{Binding SelectedRotation}" ItemsSource="{Binding RotationHelperFile.Rotations}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Title}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Margin="5,0" Content="Add Rotation" Command="{Binding AddRotationCommand}" />
+                <Button Margin="5,0" Content="Remove Rotation" Command="{Binding RemoveRotationCommand}" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Margin="10" Grid.Row="2" Orientation="Vertical">
+            <TextBlock Text="Rotation Title:" />
+            <TextBox Text="{Binding SelectedRotation.Title}" />
+        </StackPanel>
+
+        <DockPanel Margin="10" Grid.Row="3">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                <Button Margin="0,0,5,5" Content="Add Key" Command="{Binding AddKeyCommand}" />
+                <Button Margin="5,0,5,5" Content="Remove Key" Command="{Binding RemoveKeyCommand}" />
+            </StackPanel>
+            <DataGrid DockPanel.Dock="Bottom" AutoGenerateColumns="False" SelectionMode="Single" CanUserAddRows="False" CanUserDeleteRows="False" SelectedItem="{Binding SelectedKeyCommand}"
+                      ItemsSource="{Binding SelectedRotation.KeyCommands}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="X" Binding="{Binding X}" />
+                    <DataGridTextColumn Header="Y" Binding="{Binding Y}" />
+                    <DataGridTextColumn Header="Red" Binding="{Binding Red}" />
+                    <DataGridTextColumn Header="Green" Binding="{Binding Green}" />
+                    <DataGridTextColumn Header="Blue" Binding="{Binding Blue}" />
+                    <DataGridTemplateColumn Header="Color">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="local:KeyCommand">
+                                <Rectangle>
+                                    <Rectangle.Fill>
+                                        <SolidColorBrush Color="{Binding Color}" />
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridComboBoxColumn Header="Key" SelectedItemBinding="{Binding Key}" ItemsSource="{Binding Source={x:Static local:KeyCommand.PossibleKeys}}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </Grid>
+</Window>
