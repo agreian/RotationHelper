@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Windows.Input;
 
-namespace AutoGarrisonMissions.HotkeyHelper
+namespace RotationHelper.Helper.Hotkey
 {
     /// <summary>
     /// Represents an Hotkey
@@ -78,7 +78,7 @@ namespace AutoGarrisonMissions.HotkeyHelper
                 if (value != _enabled)
                 {
                     _enabled = value;
-                    OnPropertyChanged("Enabled");
+                    RaisePropertyChanged("Enabled");
                 }
             }
         }
@@ -95,7 +95,7 @@ namespace AutoGarrisonMissions.HotkeyHelper
                 if (_key != value)
                 {
                     _key = value;
-                    OnPropertyChanged("Key");
+                    RaisePropertyChanged("Key");
                 }
             }
         }
@@ -111,7 +111,7 @@ namespace AutoGarrisonMissions.HotkeyHelper
                 if (_modifiers != value)
                 {
                     _modifiers = value;
-                    OnPropertyChanged("Modifiers");
+                    RaisePropertyChanged("Modifiers");
                 }
             }
         }
@@ -159,7 +159,7 @@ namespace AutoGarrisonMissions.HotkeyHelper
 
         public override string ToString()
         {
-            return string.Format("{0} + {1} ({2}Enabled)", Key, Modifiers, Enabled ? "" : "Not ");
+            return $"{Key} + {Modifiers} ({(Enabled ? "" : "Not ")}Enabled)";
         }
 
         #endregion
@@ -168,19 +168,17 @@ namespace AutoGarrisonMissions.HotkeyHelper
 
         internal void RaiseOnHotKeyPressed()
         {
-            OnHotKeyPress();
+            RaiseHotKeyPress();
         }
 
-        protected virtual void OnHotKeyPress()
+        protected virtual void RaiseHotKeyPress()
         {
-            if (HotKeyPressed != null)
-                HotKeyPressed(this, new HotkeyEventArgs(this));
+            HotKeyPressed?.Invoke(this, new HotkeyEventArgs(this));
         }
 
-        protected virtual void OnPropertyChanged(string propertyName)
+        protected virtual void RaisePropertyChanged(string propertyName)
         {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion

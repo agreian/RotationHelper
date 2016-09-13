@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AutoGarrisonMissions.HotkeyHelper
+namespace RotationHelper.Helper.Hotkey
 {
     public class HotkeyEventArgs : EventArgs
     {

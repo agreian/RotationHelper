@@ -1,12 +1,11 @@
-﻿using System;
-using System.Windows;
+﻿using RotationHelper.ViewModel;
 
-namespace RotationHelper
+namespace RotationHelper.View
 {
     /// <summary>
     ///     Logique d'interaction pour MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         #region Constructors
 

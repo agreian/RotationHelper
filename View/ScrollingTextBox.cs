@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace RotationHelper
+namespace RotationHelper.View
 {
     public class ScrollingTextBox : TextBox
     {

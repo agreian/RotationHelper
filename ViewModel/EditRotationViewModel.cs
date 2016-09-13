@@ -1,8 +1,9 @@
 using System.Linq;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
+using RotationHelper.Model;
 
-namespace RotationHelper
+namespace RotationHelper.ViewModel
 {
     public class EditRotationViewModel : ViewModelBase
     {

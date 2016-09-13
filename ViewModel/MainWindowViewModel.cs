@@ -1,41 +1,46 @@
-﻿using AutoGarrisonMissions.HotkeyHelper;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.CommandWpf;
-using Microsoft.Win32;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using WindowsInput;
 using WindowsInput.Native;
+using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.CommandWpf;
+using Microsoft.Win32;
+using RotationHelper.Helper;
+using RotationHelper.Helper.Hotkey;
+using RotationHelper.Model;
+using RotationHelper.View;
+using Point = System.Drawing.Point;
+using Timer = System.Timers.Timer;
 
-namespace RotationHelper
+namespace RotationHelper.ViewModel
 {
     public class MainWindowViewModel : ViewModelBase
     {
         #region Constants
 
-        private const string DefaultExt = ".rotation";
-        private const string RotationHelperFilesRotationRotation = "Rotation Helper files (*.rotation)|*.rotation";
+        private const string DEFAULT_EXT = ".rotation";
+        private const string ROTATION_HELPER_FILES_ROTATION_ROTATION = "Rotation Helper files (*.rotation)|*.rotation";
 
         #endregion
 
         #region Fields
 
-        private readonly Random _randomKeyPress = new Random();
-        private readonly Random _randomTimer = new Random();
+        private readonly Timer _rotationTimer;
         private readonly Semaphore _semaphore = new Semaphore(1, 1);
-        private readonly System.Timers.Timer _rotationTimer;
+        private readonly Random _timerRandom = new Random();
 
-        private Hotkey _controlLHotkey;
-        private Hotkey _controlPHotkey;
+        private Hotkey _changeRotationHotkey;
         private HotkeyHost _hotkeyHost;
         private bool _isStarted;
         private string _loadedFilePath;
         private Rotation _selectedRotation;
+        private Hotkey _startStopHotkey;
 
         #endregion
 
@@ -46,11 +51,11 @@ namespace RotationHelper
             MainWindow = mainWindow;
             LoggingTextBox = mainWindow.ScrollingTextBox;
 
-            NewCommand = new RelayCommand(NewAction);
-            LoadCommand = new RelayCommand(LoadAction);
-            SaveCommand = new RelayCommand(SaveAction);
-            EditCommand = new RelayCommand(EditAction);
-            StartStopCommand = new RelayCommand(StartStopAction);
+            NewCommand = new RelayCommand(NewAction, NewCanAction);
+            LoadCommand = new RelayCommand(LoadAction, LoadCanAction);
+            SaveCommand = new RelayCommand(SaveAction, SaveCanAction);
+            EditCommand = new RelayCommand(EditAction, EditCanAction);
+            StartStopCommand = new RelayCommand(StartStopAction, StartStopCanAction);
 
             InputSimulator = new InputSimulator();
             KeyboardSimulator = new KeyboardSimulator(InputSimulator);
@@ -58,8 +63,8 @@ namespace RotationHelper
             MainWindow.Loaded += MainWindowOnLoaded;
             MainWindow.Unloaded += MainWindowOnUnloaded;
 
-            _rotationTimer = new System.Timers.Timer(160);
-            _rotationTimer.Elapsed += RotationTimerCallback;
+            _rotationTimer = new Timer(160);
+            _rotationTimer.Elapsed += RotationTimerOnElapsed;
         }
 
         #endregion
@@ -135,18 +140,32 @@ namespace RotationHelper
 
             var editWindow = new EditRotationWindow(CurrentRotationHelperFile);
             editWindow.ShowDialog();
+
+            SelectedRotation = CurrentRotationHelperFile.Rotations.FirstOrDefault();
+        }
+
+        private bool EditCanAction()
+        {
+            return CurrentRotationHelperFile != null && IsStarted == false;
         }
 
         private void LoadAction()
         {
             if (IsStarted) return;
 
-            var dlg = new OpenFileDialog { DefaultExt = DefaultExt, Multiselect = false, Filter = RotationHelperFilesRotationRotation };
+            var dlg = new OpenFileDialog { DefaultExt = DEFAULT_EXT, Multiselect = false, Filter = ROTATION_HELPER_FILES_ROTATION_ROTATION };
 
             var result = dlg.ShowDialog();
             if (result != true) return;
 
             LoadFile(dlg.FileName);
+            
+            SelectedRotation = CurrentRotationHelperFile.Rotations.FirstOrDefault();
+        }
+
+        private bool LoadCanAction()
+        {
+            return IsStarted == false;
         }
 
         private void LoadFile(string fileName)
@@ -159,22 +178,22 @@ namespace RotationHelper
         private void MainWindowOnLoaded(object sender, RoutedEventArgs routedEventArgs)
         {
             _hotkeyHost = new HotkeyHost((HwndSource)PresentationSource.FromVisual(Application.Current.MainWindow));
-            _controlPHotkey = new Hotkey(Key.P, ModifierKeys.Control);
-            _controlPHotkey.HotKeyPressed += OnControlPHotkeyPressed;
+            _startStopHotkey = new Hotkey(Key.P, ModifierKeys.Control);
+            _startStopHotkey.HotKeyPressed += OnStartStopHotkeyPressed;
 
-            _controlLHotkey = new Hotkey(Key.L, ModifierKeys.Control);
-            _controlLHotkey.HotKeyPressed += OnControlLHotkeyPressed;
+            _changeRotationHotkey = new Hotkey(Key.L, ModifierKeys.Control);
+            _changeRotationHotkey.HotKeyPressed += OnChangeRotationHotkeyPressed;
 
-            _hotkeyHost.AddHotKey(_controlPHotkey);
-            _hotkeyHost.AddHotKey(_controlLHotkey);
+            _hotkeyHost.AddHotKey(_startStopHotkey);
+            _hotkeyHost.AddHotKey(_changeRotationHotkey);
         }
 
         private void MainWindowOnUnloaded(object sender, RoutedEventArgs routedEventArgs)
         {
             if (IsStarted) StartStopAction();
 
-            _hotkeyHost.RemoveHotKey(_controlPHotkey);
-            _hotkeyHost.RemoveHotKey(_controlLHotkey);
+            _hotkeyHost.RemoveHotKey(_startStopHotkey);
+            _hotkeyHost.RemoveHotKey(_changeRotationHotkey);
         }
 
         private void NewAction()
@@ -184,23 +203,30 @@ namespace RotationHelper
             CurrentRotationHelperFile = new RotationHelperFile();
 
             LoadedFilePath = null;
+
+            SaveAction();
         }
 
-        private void OnControlLHotkeyPressed(object sender, HotkeyEventArgs e)
+        private bool NewCanAction()
         {
-            if (CurrentRotationHelperFile == null || CurrentRotationHelperFile.Rotations.Count == 0 || SelectedRotation == null) return;
+            return IsStarted == false;
+        }
+
+        private void OnChangeRotationHotkeyPressed(object sender, HotkeyEventArgs e)
+        {
+            if (CurrentRotationHelperFile == null || CurrentRotationHelperFile.Rotations.Count == 0) return;
 
             var index = CurrentRotationHelperFile.Rotations.IndexOf(SelectedRotation);
             index++;
             SelectedRotation = index >= CurrentRotationHelperFile.Rotations.Count || index == -1 ? CurrentRotationHelperFile.Rotations.First() : CurrentRotationHelperFile.Rotations[index];
         }
 
-        private void OnControlPHotkeyPressed(object sender, HotkeyEventArgs e)
+        private void OnStartStopHotkeyPressed(object sender, HotkeyEventArgs e)
         {
             StartStopAction();
         }
 
-        private void RotationTimerCallback(object sender, System.Timers.ElapsedEventArgs e)
+        private void RotationTimerOnElapsed(object sender, ElapsedEventArgs e)
         {
             _semaphore.WaitOne();
 
@@ -208,7 +234,9 @@ namespace RotationHelper
 
             _rotationTimer.Stop();
 
-            var points = SelectedRotation.KeyCommands.Select(x => new System.Drawing.Point(x.X, x.Y)).Distinct().ToArray();
+            Thread.Sleep(_timerRandom.Next(0, 81));
+
+            var points = SelectedRotation.KeyCommands.Select(x => new Point(x.X, x.Y)).Distinct().ToArray();
 
             var colors = ScreenshotHelper.GetColorAt(points);
 
@@ -239,7 +267,7 @@ namespace RotationHelper
             var path = LoadedFilePath;
             if (string.IsNullOrWhiteSpace(path))
             {
-                var dlg = new SaveFileDialog { DefaultExt = DefaultExt, Filter = RotationHelperFilesRotationRotation };
+                var dlg = new SaveFileDialog { DefaultExt = DEFAULT_EXT, Filter = ROTATION_HELPER_FILES_ROTATION_ROTATION };
 
                 var result = dlg.ShowDialog();
                 if (result != true) return;
@@ -252,6 +280,11 @@ namespace RotationHelper
             LoadedFilePath = path;
         }
 
+        private bool SaveCanAction()
+        {
+            return CurrentRotationHelperFile != null && IsStarted == false;
+        }
+
         private void StartStopAction()
         {
             if (CurrentRotationHelperFile == null || CurrentRotationHelperFile.Rotations.Count == 0) return;
@@ -262,16 +295,19 @@ namespace RotationHelper
 
             if (IsStarted) // Stop
             {
-                SelectedRotation = CurrentRotationHelperFile.Rotations.First();
                 _rotationTimer.Start();
             }
             else
             {
-                SelectedRotation = null;
                 _rotationTimer.Stop();
             }
 
             _semaphore.Release();
+        }
+
+        private bool StartStopCanAction()
+        {
+            return CurrentRotationHelperFile != null && CurrentRotationHelperFile.Rotations.Count > 0;
         }
 
         #endregion

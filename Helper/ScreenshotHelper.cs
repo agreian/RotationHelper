@@ -1,24 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Windows.Media;
+using System.Drawing;
 using System.Runtime.InteropServices;
-using System.Windows;
+using Color = System.Windows.Media.Color;
 
-namespace RotationHelper
+namespace RotationHelper.Helper
 {
     internal class ScreenshotHelper
     {
         #region Fields
 
-        private static readonly List<Color> Colors = new List<Color>();
+        private static readonly List<Color> _colors = new List<Color>();
 
         #endregion
 
         #region Methods
 
-        public static Color[] GetColorAt(params System.Drawing.Point[] points)
+        public static Color[] GetColorAt(params Point[] points)
         {
-            Colors.Clear();
+            _colors.Clear();
 
             var desk = GetDesktopWindow();
             var dc = GetWindowDC(desk);
@@ -26,12 +26,12 @@ namespace RotationHelper
             foreach (var point in points)
             {
                 var pixel = (int)GetPixel(dc, point.X, point.Y);
-                Colors.Add(Color.FromArgb(255, (byte)((pixel >> 0) & 0xFF), (byte)((pixel >> 8) & 0xFF), (byte)((pixel >> 16) & 0xFF)));
+                _colors.Add(Color.FromArgb(255, (byte)((pixel >> 0) & 0xFF), (byte)((pixel >> 8) & 0xFF), (byte)((pixel >> 16) & 0xFF)));
             }
 
             ReleaseDC(desk, dc);
 
-            return Colors.ToArray();
+            return _colors.ToArray();
         }
 
         [DllImport("user32.dll", SetLastError = true)]

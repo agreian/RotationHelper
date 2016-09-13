@@ -1,11 +1,12 @@
-﻿using System.Windows;
+﻿using RotationHelper.Model;
+using RotationHelper.ViewModel;
 
-namespace RotationHelper
+namespace RotationHelper.View
 {
     /// <summary>
     ///     Logique d'interaction pour EditRotationWindow.xaml
     /// </summary>
-    public partial class EditRotationWindow : Window
+    public partial class EditRotationWindow
     {
         #region Constructors
 

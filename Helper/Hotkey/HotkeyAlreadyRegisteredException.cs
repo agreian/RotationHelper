@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace AutoGarrisonMissions.HotkeyHelper
+namespace RotationHelper.Helper.Hotkey
 {
     [Serializable]
     public class HotkeyAlreadyRegisteredException : Exception
