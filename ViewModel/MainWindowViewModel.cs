@@ -69,6 +69,8 @@ namespace RotationHelper.ViewModel
             MainWindow.Unloaded += MainWindowOnUnloaded;
 
             _rotationTimer.Elapsed += RotationTimerOnElapsed;
+
+            if (App.FileToOpen != null && File.Exists(App.FileToOpen)) LoadFile(App.FileToOpen);
         }
 
         #endregion
@@ -202,11 +204,9 @@ namespace RotationHelper.ViewModel
             var dlg = new OpenFileDialog { DefaultExt = DEFAULT_EXT, Multiselect = false, Filter = ROTATION_HELPER_FILES_ROTATION_ROTATION };
 
             var result = dlg.ShowDialog();
-            if (result != true) return;
+            if (result != true || File.Exists(dlg.FileName) == false) return;
 
             LoadFile(dlg.FileName);
-
-            SelectedRotation = CurrentRotationHelperFile.Rotations.FirstOrDefault();
         }
 
         private bool LoadCanAction()
@@ -216,16 +216,19 @@ namespace RotationHelper.ViewModel
 
         private void LoadFile(string fileName)
         {
-            CurrentRotationHelperFile = RotationHelperFile.Deserialize(fileName);
+            if (File.Exists(fileName) == false) return;
 
+            CurrentRotationHelperFile = RotationHelperFile.Deserialize(fileName);
             LoadedFilePath = fileName;
+            App.AddRecentFile(fileName);
+            SelectedRotation = CurrentRotationHelperFile.Rotations.FirstOrDefault();
         }
 
         private void MainWindowOnClosing(object sender, CancelEventArgs cancelEventArgs)
         {
             if (IsStarted) StartStopAction();
 
-            if (LoadedFilePath != null && IsSaveNeeded() == false) return;
+            if (LoadedFilePath == null || IsSaveNeeded() == false) return;
 
             var result = MessageBox.Show("Your modifications will be lost, do you want to save ?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes) SaveAction();
@@ -336,6 +339,7 @@ namespace RotationHelper.ViewModel
             }
 
             CurrentRotationHelperFile.Serialize(path);
+            App.AddRecentFile(path);
 
             LoadedFilePath = path;
         }
