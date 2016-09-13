@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -31,13 +32,14 @@ namespace RotationHelper.ViewModel
 
         #region Fields
 
-        private readonly Timer _rotationTimer;
+        private readonly Timer _rotationTimer = new Timer(160);
         private readonly Semaphore _semaphore = new Semaphore(1, 1);
         private readonly Random _timerRandom = new Random();
 
         private Hotkey _changeRotationHotkey;
         private HotkeyHost _hotkeyHost;
         private bool _isStarted;
+        private byte[] _loadedFileByteArray;
         private string _loadedFilePath;
         private Rotation _selectedRotation;
         private Hotkey _startStopHotkey;
@@ -57,13 +59,15 @@ namespace RotationHelper.ViewModel
             EditCommand = new RelayCommand(EditAction, EditCanAction);
             StartStopCommand = new RelayCommand(StartStopAction, StartStopCanAction);
 
+            SaveCommand.CanExecuteChanged += SaveCommandOnCanExecuteChanged;
+
             InputSimulator = new InputSimulator();
             KeyboardSimulator = new KeyboardSimulator(InputSimulator);
 
             MainWindow.Loaded += MainWindowOnLoaded;
+            MainWindow.Closing += MainWindowOnClosing;
             MainWindow.Unloaded += MainWindowOnUnloaded;
 
-            _rotationTimer = new Timer(160);
             _rotationTimer.Elapsed += RotationTimerOnElapsed;
         }
 
@@ -100,6 +104,19 @@ namespace RotationHelper.ViewModel
             {
                 _loadedFilePath = value;
                 RaisePropertyChanged(() => LoadedFileName);
+
+                if (LoadedFilePath != null && File.Exists(LoadedFilePath))
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        using (var fileStream2 = File.Open(LoadedFilePath, FileMode.Open))
+                        {
+                            fileStream2.CopyTo(memoryStream);
+                        }
+                        _loadedFileByteArray = memoryStream.ToArray();
+                    }
+                }
+                else _loadedFileByteArray = null;
             }
         }
 
@@ -125,6 +142,8 @@ namespace RotationHelper.ViewModel
 
         public string StartStopContent => IsStarted ? "Stop" : "Start";
 
+        public string WindowTitle => $"Rotation Helper{(LoadedFilePath == null ? "" : $" - {LoadedFileName}{(IsSaveNeeded() ? "*" : "")}")}";
+
         #endregion
 
         #region Methods
@@ -149,6 +168,33 @@ namespace RotationHelper.ViewModel
             return CurrentRotationHelperFile != null && IsStarted == false;
         }
 
+        private bool IsSaveNeeded()
+        {
+            if (CurrentRotationHelperFile == null || _loadedFileByteArray == null) return true;
+
+            try
+            {
+                byte[] byteArray;
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    CurrentRotationHelperFile.Serialize(memoryStream);
+                    byteArray = memoryStream.ToArray();
+                }
+
+                if (byteArray.Length != _loadedFileByteArray.Length) return true;
+
+                // ReSharper disable once LoopCanBeConvertedToQuery
+                for (var i = 0; i < byteArray.Length; ++i) if (byteArray[i] != _loadedFileByteArray[i]) return true;
+
+                return false;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
         private void LoadAction()
         {
             if (IsStarted) return;
@@ -159,7 +205,7 @@ namespace RotationHelper.ViewModel
             if (result != true) return;
 
             LoadFile(dlg.FileName);
-            
+
             SelectedRotation = CurrentRotationHelperFile.Rotations.FirstOrDefault();
         }
 
@@ -173,6 +219,16 @@ namespace RotationHelper.ViewModel
             CurrentRotationHelperFile = RotationHelperFile.Deserialize(fileName);
 
             LoadedFilePath = fileName;
+        }
+
+        private void MainWindowOnClosing(object sender, CancelEventArgs cancelEventArgs)
+        {
+            if (IsStarted) StartStopAction();
+
+            if (!IsSaveNeeded()) return;
+
+            var result = MessageBox.Show("Your modifications will be lost, do you want to save ?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.Yes) SaveAction();
         }
 
         private void MainWindowOnLoaded(object sender, RoutedEventArgs routedEventArgs)
@@ -190,10 +246,12 @@ namespace RotationHelper.ViewModel
 
         private void MainWindowOnUnloaded(object sender, RoutedEventArgs routedEventArgs)
         {
-            if (IsStarted) StartStopAction();
-
             _hotkeyHost.RemoveHotKey(_startStopHotkey);
             _hotkeyHost.RemoveHotKey(_changeRotationHotkey);
+
+            _rotationTimer.Stop();
+            _rotationTimer.Close();
+            _rotationTimer.Dispose();
         }
 
         private void NewAction()
@@ -205,6 +263,8 @@ namespace RotationHelper.ViewModel
             LoadedFilePath = null;
 
             SaveAction();
+
+            if (LoadedFilePath == null) CurrentRotationHelperFile = null;
         }
 
         private bool NewCanAction()
@@ -282,7 +342,12 @@ namespace RotationHelper.ViewModel
 
         private bool SaveCanAction()
         {
-            return CurrentRotationHelperFile != null && IsStarted == false;
+            return CurrentRotationHelperFile != null && IsStarted == false && IsSaveNeeded();
+        }
+
+        private void SaveCommandOnCanExecuteChanged(object sender, EventArgs eventArgs)
+        {
+            RaisePropertyChanged(() => WindowTitle);
         }
 
         private void StartStopAction()

@@ -66,7 +66,7 @@ namespace RotationHelper.Model
             }
         }
 
-        private void Serialize(Stream stream)
+        public void Serialize(Stream stream)
         {
             var bin = new XmlSerializer(typeof(RotationHelperFile));
             bin.Serialize(stream, this);
