@@ -1,4 +1,3 @@
 # RotationHelper
-WoW Rotation Helper
 
-Need windowed fullscreen mode + WeakAuras to work properly
+Need Wow in windowed fullscreen mode + WeakAuras 2 to work properly
