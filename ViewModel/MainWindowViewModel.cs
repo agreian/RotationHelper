@@ -6,18 +6,23 @@ using System.Media;
 using System.Threading;
 using System.Timers;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Interop;
 using WindowsInput;
 using WindowsInput.Native;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
-using Microsoft.Win32;
 using RotationHelper.Helper;
 using RotationHelper.Helper.Hotkey;
 using RotationHelper.Model;
 using RotationHelper.View;
+using Application = System.Windows.Application;
+using Cursor = System.Windows.Forms.Cursor;
+using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
 using Point = System.Drawing.Point;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 using Timer = System.Timers.Timer;
 
 namespace RotationHelper.ViewModel
@@ -40,6 +45,7 @@ namespace RotationHelper.ViewModel
         private Hotkey _changeRotationHotkey;
         private HotkeyHost _hotkeyHost;
         private bool _isRotationStarted;
+        private string _lastText;
         private byte[] _loadedFileByteArray;
         private string _loadedFilePath;
         private Overlay _overlay;
@@ -63,7 +69,6 @@ namespace RotationHelper.ViewModel
             SaveCommand.CanExecuteChanged += SaveCommandOnCanExecuteChanged;
 
             InputSimulator = new InputSimulator();
-            KeyboardSimulator = new KeyboardSimulator(InputSimulator);
 
             MainWindow.Loaded += MainWindowOnLoaded;
             MainWindow.Closing += MainWindowOnClosing;
@@ -100,8 +105,6 @@ namespace RotationHelper.ViewModel
         }
 
         public bool IsRotationStoped => !IsRotationStarted;
-
-        public KeyboardSimulator KeyboardSimulator { get; }
 
         public RelayCommand LoadCommand { get; }
 
@@ -160,9 +163,9 @@ namespace RotationHelper.ViewModel
 
         #region Methods
 
-        public void KeyPress(VirtualKeyCode keyCode)
+        private static void DispatcherBeginInvoke(Action action)
         {
-            KeyboardSimulator.KeyPress(keyCode);
+            Application.Current.Dispatcher.BeginInvoke(action);
         }
 
         private void EditAction()
@@ -211,6 +214,16 @@ namespace RotationHelper.ViewModel
             }
         }
 
+        private void KeyPress(VirtualKeyCode keyCode)
+        {
+            InputSimulator.Keyboard.KeyPress(keyCode);
+        }
+
+        private void KeyPress(VirtualKeyCode modifierKey, VirtualKeyCode key)
+        {
+            InputSimulator.Keyboard.ModifiedKeyStroke(modifierKey, key);
+        }
+
         private void LoadAction()
         {
             if (IsRotationStarted) return;
@@ -236,6 +249,14 @@ namespace RotationHelper.ViewModel
             LoadedFilePath = fileName;
             App.AddRecentFile(fileName);
             SelectedRotation = CurrentRotationHelperFile.Rotations.FirstOrDefault();
+        }
+
+        private void LogText(string text, bool dontRepeat = false)
+        {
+            if (dontRepeat && _lastText == text) return;
+            _lastText = text;
+
+            DispatcherBeginInvoke(() => LoggingTextBox.AppendText(text));
         }
 
         private void MainWindowOnClosing(object sender, CancelEventArgs cancelEventArgs)
@@ -320,24 +341,45 @@ namespace RotationHelper.ViewModel
 
             Thread.Sleep(_timerRandom.Next(0, 81));
 
-            if (SelectedRotation.KeyCommands.Count == 0) Application.Current.Dispatcher.BeginInvoke((Action)(() => LoggingTextBox.AppendText($"Selected rotation has no configured key, please edit it!{Environment.NewLine}")));
-
-            var points = SelectedRotation.KeyCommands.Select(x => new Point(x.X, x.Y)).Distinct().ToArray();
-
-            var colors = ScreenshotHelper.GetColorAt(points);
-
-            foreach (var color in colors)
+            if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.CONTROL)) LogText($"CONTROL key is physically pressed, please release it!{Environment.NewLine}", true);
+            else
             {
-                var keys = SelectedRotation.KeyCommands.Where(x => x.Color.AreEquivalent(color)).ToArray();
-                if (keys.Length == 0)
-                {
-                    Application.Current.Dispatcher.BeginInvoke((Action)(() => LoggingTextBox.AppendText($"Color {color} detected, no key attached{Environment.NewLine}")));
-                }
+                if (SelectedRotation.KeyCommands.Count == 0) LogText($"Selected rotation has no configured key, please edit it!{Environment.NewLine}", true);
 
-                foreach (var key in keys)
+                var points = SelectedRotation.KeyCommands.Select(x => new Point(x.X, x.Y)).Distinct().ToArray();
+
+                var colors = ScreenshotHelper.GetColorAt(points);
+
+                foreach (var color in colors)
                 {
-                    Application.Current.Dispatcher.BeginInvoke((Action)(() => LoggingTextBox.AppendText($"Color {color} detected, pressing {key.Key} ({key.Name}){Environment.NewLine}")));
-                    KeyPress(key.Key);
+                    var keys = SelectedRotation.KeyCommands.Where(x => x.Color.AreEquivalent(color)).ToArray();
+                    if (keys.Length == 0)
+                    {
+                        LogText($"Color {color} detected, no key attached{Environment.NewLine}", true);
+                    }
+
+                    foreach (var key in keys)
+                    {
+                        LogText($"Color {color} detected, pressing {(key.ModifierKey != null ? key.ModifierKey + "+" + key.Key : key.Key.ToString())} ({key.Name}){Environment.NewLine}");
+
+                        if (key.ModifierKey == null) KeyPress(key.Key);
+                        else KeyPress(key.ModifierKey.Value, key.Key);
+
+                        if (!key.NeedMouseClick) continue;
+
+                        Thread.Sleep(200 + _timerRandom.Next(0, 101));
+
+                        var cursorPosition = Cursor.Position;
+                        var primaryScreen = Screen.PrimaryScreen.Bounds;
+                        cursorPosition.X = cursorPosition.X > primaryScreen.Width ? primaryScreen.Width / 2 : cursorPosition.X;
+                        cursorPosition.Y = cursorPosition.Y > primaryScreen.Height ? primaryScreen.Height / 2 : cursorPosition.Y;
+
+                        InputSimulator.Mouse.MoveMouseTo(65535 / 2.0, 65535 / 2.0);
+                        Thread.Sleep(50);
+                        InputSimulator.Mouse.LeftButtonClick();
+                        Thread.Sleep(50);
+                        InputSimulator.Mouse.MoveMouseTo(cursorPosition.X * 65535.0 / primaryScreen.Width, cursorPosition.Y * 65535.0 / primaryScreen.Height);
+                    }
                 }
             }
 

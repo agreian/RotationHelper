@@ -94,6 +94,8 @@
       <DependentUpon>Overlay.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewModel\EditRotationViewModel.cs" />
+    <Compile Include="View\EnumerableNullReplaceConverter.cs" />
+    <Compile Include="View\NullReplaceConverter.cs" />
     <Compile Include="View\EditRotationWindow.xaml.cs">
       <DependentUpon>EditRotationWindow.xaml</DependentUpon>
     </Compile>

@@ -53,6 +53,16 @@ namespace RotationHelper.Model
             VirtualKeyCode.VK_9
         };
 
+        [XmlIgnore]
+        public static readonly ObservableCollection<VirtualKeyCode?> PossibleModifierKeys = new ObservableCollection<VirtualKeyCode?>
+        {
+            null,
+            VirtualKeyCode.LSHIFT,
+            VirtualKeyCode.RSHIFT,
+            VirtualKeyCode.LMENU,
+            VirtualKeyCode.RMENU
+        };
+
         private byte _blue;
         private byte _green;
         private byte _red;
@@ -88,7 +98,11 @@ namespace RotationHelper.Model
 
         public VirtualKeyCode Key { get; set; }
 
+        public VirtualKeyCode? ModifierKey { get; set; }
+
         public string Name { get; set; }
+
+        public bool NeedMouseClick { get; set; }
 
         public byte Red
         {
