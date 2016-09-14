@@ -39,7 +39,7 @@ namespace RotationHelper.ViewModel
 
         private Hotkey _changeRotationHotkey;
         private HotkeyHost _hotkeyHost;
-        private bool _isStarted;
+        private bool _isRotationStarted;
         private byte[] _loadedFileByteArray;
         private string _loadedFilePath;
         private Overlay _overlay;
@@ -84,17 +84,22 @@ namespace RotationHelper.ViewModel
 
         public RelayCommand EditCommand { get; }
 
+        public bool Editing { get; set; }
+
         public InputSimulator InputSimulator { get; }
 
-        public bool IsStarted
+        public bool IsRotationStarted
         {
-            get { return _isStarted; }
+            get { return _isRotationStarted; }
             set
             {
-                _isStarted = value;
+                _isRotationStarted = value;
                 RaisePropertyChanged(() => StartStopContent);
+                RaisePropertyChanged(() => IsRotationStoped);
             }
         }
+
+        public bool IsRotationStoped => !IsRotationStarted;
 
         public KeyboardSimulator KeyboardSimulator { get; }
 
@@ -131,6 +136,8 @@ namespace RotationHelper.ViewModel
 
         public RelayCommand NewCommand { get; }
 
+        public bool OverlayEnabled { get; set; } = true;
+
         public RelayCommand SaveCommand { get; }
 
         public Rotation SelectedRotation
@@ -145,7 +152,7 @@ namespace RotationHelper.ViewModel
 
         public RelayCommand StartStopCommand { get; }
 
-        public string StartStopContent => IsStarted ? "Stop" : "Start";
+        public string StartStopContent => IsRotationStarted ? "Stop" : "Start";
 
         public string WindowTitle => $"Rotation Helper{(LoadedFilePath == null ? "" : $" - {LoadedFileName}{(IsSaveNeeded() ? "*" : "")}")}";
 
@@ -160,17 +167,21 @@ namespace RotationHelper.ViewModel
 
         private void EditAction()
         {
-            if (CurrentRotationHelperFile == null || IsStarted) return;
+            if (CurrentRotationHelperFile == null || IsRotationStarted) return;
+
+            Editing = true;
 
             var editWindow = new EditRotationWindow(CurrentRotationHelperFile);
             editWindow.ShowDialog();
 
             SelectedRotation = CurrentRotationHelperFile.Rotations.FirstOrDefault();
+
+            Editing = false;
         }
 
         private bool EditCanAction()
         {
-            return CurrentRotationHelperFile != null && IsStarted == false;
+            return CurrentRotationHelperFile != null && IsRotationStarted == false;
         }
 
         private bool IsSaveNeeded()
@@ -202,7 +213,7 @@ namespace RotationHelper.ViewModel
 
         private void LoadAction()
         {
-            if (IsStarted) return;
+            if (IsRotationStarted) return;
 
             var dlg = new OpenFileDialog { DefaultExt = DEFAULT_EXT, Multiselect = false, Filter = ROTATION_HELPER_FILES_ROTATION_ROTATION };
 
@@ -214,7 +225,7 @@ namespace RotationHelper.ViewModel
 
         private bool LoadCanAction()
         {
-            return IsStarted == false;
+            return IsRotationStarted == false;
         }
 
         private void LoadFile(string fileName)
@@ -229,7 +240,7 @@ namespace RotationHelper.ViewModel
 
         private void MainWindowOnClosing(object sender, CancelEventArgs cancelEventArgs)
         {
-            if (IsStarted) StartStopAction();
+            if (IsRotationStarted) StartStopAction();
 
             if (LoadedFilePath == null || IsSaveNeeded() == false) return;
 
@@ -262,7 +273,7 @@ namespace RotationHelper.ViewModel
 
         private void NewAction()
         {
-            if (IsStarted) return;
+            if (IsRotationStarted) return;
 
             CurrentRotationHelperFile = new RotationHelperFile();
 
@@ -275,11 +286,12 @@ namespace RotationHelper.ViewModel
 
         private bool NewCanAction()
         {
-            return IsStarted == false;
+            return IsRotationStarted == false;
         }
 
         private void OnChangeRotationHotkeyPressed(object sender, HotkeyEventArgs e)
         {
+            if (Editing) return;
             if (CurrentRotationHelperFile == null || CurrentRotationHelperFile.Rotations.Count == 0) return;
 
             var index = CurrentRotationHelperFile.Rotations.IndexOf(SelectedRotation);
@@ -291,6 +303,8 @@ namespace RotationHelper.ViewModel
 
         private void OnStartStopHotkeyPressed(object sender, HotkeyEventArgs e)
         {
+            if (Editing) return;
+
             StartStopAction();
 
             SystemSounds.Beep.Play();
@@ -300,7 +314,7 @@ namespace RotationHelper.ViewModel
         {
             _semaphore.WaitOne();
 
-            if (!IsStarted) return;
+            if (!IsRotationStarted) return;
 
             _rotationTimer.Stop();
 
@@ -355,7 +369,7 @@ namespace RotationHelper.ViewModel
 
         private bool SaveCanAction()
         {
-            return CurrentRotationHelperFile != null && IsStarted == false && IsSaveNeeded();
+            return CurrentRotationHelperFile != null && IsRotationStarted == false && IsSaveNeeded();
         }
 
         private void SaveCommandOnCanExecuteChanged(object sender, EventArgs eventArgs)
@@ -369,19 +383,27 @@ namespace RotationHelper.ViewModel
 
             _semaphore.WaitOne();
 
-            IsStarted = !IsStarted;
+            IsRotationStarted = !IsRotationStarted;
 
-            if (IsStarted) // Stop
+            if (IsRotationStarted) // Stop
             {
                 _rotationTimer.Start();
-                _overlay = new Overlay();
-                _overlay.Show();
+
+                if (OverlayEnabled)
+                {
+                    _overlay = new Overlay();
+                    _overlay.Show();
+                }
             }
             else
             {
                 _rotationTimer.Stop();
-                _overlay.Close();
-                _overlay = null;
+
+                if (_overlay != null)
+                {
+                    _overlay.Close();
+                    _overlay = null;
+                }
             }
 
             _semaphore.Release();

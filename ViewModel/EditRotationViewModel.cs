@@ -1,12 +1,15 @@
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Linq;
+using System.Timers;
+using System.Windows.Forms;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using RotationHelper.Helper;
 using RotationHelper.Model;
 using RotationHelper.View;
-using System;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
+using Application = System.Windows.Application;
 using Color = System.Windows.Media.Color;
 using Timer = System.Timers.Timer;
 
@@ -18,7 +21,7 @@ namespace RotationHelper.ViewModel
 
         private readonly Timer _mousePositionColorTimer = new Timer();
 
-        private Point _mousePosition = new Point();
+        private Point _mousePosition;
         private Color _mousePositionColor;
         private KeyCommand _selectedKeyCommand;
         private Rotation _selectedRotation;
@@ -102,19 +105,19 @@ namespace RotationHelper.ViewModel
             if (SelectedRotation == null) SelectedRotation = RotationHelperFile.Rotations.First();
         }
 
-        private void EditRotationWindowOnClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void EditRotationWindowOnClosing(object sender, CancelEventArgs e)
         {
             _mousePositionColorTimer.Stop();
             _mousePositionColorTimer.Close();
             _mousePositionColorTimer.Dispose();
         }
 
-        private void MousePositionColorTimerOnElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        private void MousePositionColorTimerOnElapsed(object sender, ElapsedEventArgs e)
         {
             _mousePosition = Cursor.Position;
             _mousePositionColor = ScreenshotHelper.GetColorAt(_mousePosition).First();
 
-            System.Windows.Application.Current.Dispatcher.BeginInvoke((Action)(() => RaisePropertyChanged(() => MousePixelColor)));
+            Application.Current.Dispatcher.BeginInvoke((Action)(() => RaisePropertyChanged(() => MousePixelColor)));
         }
 
         private void RemoveKeyAction()

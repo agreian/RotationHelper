@@ -27,11 +27,12 @@
             <Button DockPanel.Dock="Top" Content="Load" Command="{Binding LoadCommand}" />
             <Button DockPanel.Dock="Top" Content="Save" Command="{Binding SaveCommand}" />
             <Button DockPanel.Dock="Top" Content="Edit" Command="{Binding EditCommand}" />
-            <TextBlock DockPanel.Dock="Top" Margin="0,10,0,0" TextWrapping="Wrap" Text="Current file:" />
-            <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Text="{Binding LoadedFileName}" />
-            <TextBlock DockPanel.Dock="Top" Margin="0,10,0,0" TextWrapping="Wrap" Text="Current rotation:" />
-            <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Text="{Binding SelectedRotation.Title}" />
+            <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Right" Margin="0,10,0,0" TextWrapping="Wrap" Text="Current file:" />
+            <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Right" TextWrapping="Wrap" Text="{Binding LoadedFileName}" />
+            <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Right" Margin="0,10,0,0" TextWrapping="Wrap" Text="Current rotation:" />
+            <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Right" TextWrapping="Wrap" Text="{Binding SelectedRotation.Title}" />
             <Button DockPanel.Dock="Bottom" Content="{Binding StartStopContent}" Command="{Binding StartStopCommand}" />
+            <CheckBox DockPanel.Dock="Bottom" Content="Overlay" IsEnabled="{Binding IsRotationStoped}" IsChecked="{Binding OverlayEnabled}" />
         </DockPanel>
     </Grid>
 </Window>
