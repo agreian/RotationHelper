@@ -272,10 +272,10 @@ namespace RotationHelper.ViewModel
         private void MainWindowOnLoaded(object sender, RoutedEventArgs routedEventArgs)
         {
             _hotkeyHost = new HotkeyHost((HwndSource)PresentationSource.FromVisual(Application.Current.MainWindow));
-            _startStopHotkey = new Hotkey(Key.P, ModifierKeys.Control);
+            _startStopHotkey = new Hotkey(Key.A, ModifierKeys.Control);
             _startStopHotkey.HotKeyPressed += OnStartStopHotkeyPressed;
 
-            _changeRotationHotkey = new Hotkey(Key.L, ModifierKeys.Control);
+            _changeRotationHotkey = new Hotkey(Key.E, ModifierKeys.Control);
             _changeRotationHotkey.HotKeyPressed += OnChangeRotationHotkeyPressed;
 
             _hotkeyHost.AddHotKey(_startStopHotkey);
@@ -324,7 +324,7 @@ namespace RotationHelper.ViewModel
 
         private void OnStartStopHotkeyPressed(object sender, HotkeyEventArgs e)
         {
-            if (Editing) return;
+            if (Editing || StartStopCanAction() == false) return;
 
             StartStopAction();
 
@@ -341,7 +341,10 @@ namespace RotationHelper.ViewModel
 
             Thread.Sleep(_timerRandom.Next(0, 81));
 
-            if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.CONTROL)) LogText($"CONTROL key is physically pressed, please release it!{Environment.NewLine}", true);
+            var modifiers = new VirtualKeyCode?[] { VirtualKeyCode.CONTROL, VirtualKeyCode.SHIFT, VirtualKeyCode.MENU };
+            var keyDownModifier = modifiers.FirstOrDefault(x => InputSimulator.InputDeviceState.IsHardwareKeyDown(x.Value));
+
+            if (keyDownModifier != null) LogText($"{keyDownModifier.Value} key is physically pressed, please release it!{Environment.NewLine}", true);
             else
             {
                 if (SelectedRotation.KeyCommands.Count == 0) LogText($"Selected rotation has no configured key, please edit it!{Environment.NewLine}", true);
@@ -367,7 +370,10 @@ namespace RotationHelper.ViewModel
 
                         if (!key.NeedMouseClick) continue;
 
-                        Thread.Sleep(200 + _timerRandom.Next(0, 101));
+                        while (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON) || InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON))
+                        {
+                            Thread.Sleep(200 + _timerRandom.Next(0, 101));
+                        }
 
                         var cursorPosition = Cursor.Position;
                         var primaryScreen = Screen.PrimaryScreen.Bounds;
