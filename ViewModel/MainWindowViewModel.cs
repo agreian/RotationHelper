@@ -38,7 +38,7 @@ namespace RotationHelper.ViewModel
 
         #region Fields
 
-        private readonly Timer _rotationTimer = new Timer(160);
+        private readonly Timer _rotationTimer = new Timer(Properties.Settings.Default.MinTimeBetweenProcessing);
         private readonly Semaphore _semaphore = new Semaphore(1, 1);
         private readonly Random _timerRandom = new Random();
 
@@ -339,9 +339,10 @@ namespace RotationHelper.ViewModel
 
             _rotationTimer.Stop();
 
-            Thread.Sleep(_timerRandom.Next(0, 81));
+            Thread.Sleep(_timerRandom.Next(0, Properties.Settings.Default.MaxTimeBetweenProcessing - Properties.Settings.Default.MinTimeBetweenProcessing));
 
             var modifiers = new VirtualKeyCode?[] { VirtualKeyCode.CONTROL, VirtualKeyCode.SHIFT, VirtualKeyCode.MENU };
+            // ReSharper disable once PossibleInvalidOperationException
             var keyDownModifier = modifiers.FirstOrDefault(x => InputSimulator.InputDeviceState.IsHardwareKeyDown(x.Value));
 
             if (keyDownModifier != null) LogText($"{keyDownModifier.Value} key is physically pressed, please release it!{Environment.NewLine}", true);
@@ -372,7 +373,7 @@ namespace RotationHelper.ViewModel
 
                         while (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON) || InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON))
                         {
-                            Thread.Sleep(200 + _timerRandom.Next(0, 101));
+                            Thread.Sleep(_timerRandom.Next(Properties.Settings.Default.MinTimeBetweenKeyPressAndMouseClick, Properties.Settings.Default.MaxTimeBetweenKeyPressAndMouseClick));
                         }
 
                         var cursorPosition = Cursor.Position;
@@ -381,9 +382,9 @@ namespace RotationHelper.ViewModel
                         cursorPosition.Y = cursorPosition.Y > primaryScreen.Height ? primaryScreen.Height / 2 : cursorPosition.Y;
 
                         InputSimulator.Mouse.MoveMouseTo(65535 / 2.0, 65535 / 2.0);
-                        Thread.Sleep(50);
+                        Thread.Sleep(_timerRandom.Next(Properties.Settings.Default.MinTimeBetweenMouseMove, Properties.Settings.Default.MaxTimeBetweenMouseMove));
                         InputSimulator.Mouse.LeftButtonClick();
-                        Thread.Sleep(50);
+                        Thread.Sleep(_timerRandom.Next(Properties.Settings.Default.MinTimeBetweenMouseMove, Properties.Settings.Default.MaxTimeBetweenMouseMove));
                         InputSimulator.Mouse.MoveMouseTo(cursorPosition.X * 65535.0 / primaryScreen.Width, cursorPosition.Y * 65535.0 / primaryScreen.Height);
                     }
                 }

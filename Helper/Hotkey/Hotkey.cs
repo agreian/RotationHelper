@@ -139,7 +139,7 @@ namespace RotationHelper.Helper.Hotkey
 
         public bool Equals(Hotkey other)
         {
-            return (Key == other.Key && Modifiers == other.Modifiers);
+            return other != null && Key == other.Key && Modifiers == other.Modifiers;
         }
 
         #endregion

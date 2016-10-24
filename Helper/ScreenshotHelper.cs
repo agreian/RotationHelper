@@ -20,16 +20,16 @@ namespace RotationHelper.Helper
         {
             _colors.Clear();
 
-            var desk = GetDesktopWindow();
-            var dc = GetWindowDC(desk);
+            var desktopWindow = GetDesktopWindow();
+            var windowDc = GetWindowDC(desktopWindow);
 
             foreach (var point in points)
             {
-                var pixel = (int)GetPixel(dc, point.X, point.Y);
+                var pixel = (int)GetPixel(windowDc, point.X, point.Y);
                 _colors.Add(Color.FromArgb(255, (byte)((pixel >> 0) & 0xFF), (byte)((pixel >> 8) & 0xFF), (byte)((pixel >> 16) & 0xFF)));
             }
 
-            ReleaseDC(desk, dc);
+            ReleaseDC(desktopWindow, windowDc);
 
             return _colors.ToArray();
         }
