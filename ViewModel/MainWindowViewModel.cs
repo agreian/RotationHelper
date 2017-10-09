@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -38,6 +39,7 @@ namespace RotationHelper.ViewModel
 
         #region Fields
 
+        private readonly VirtualKeyCode?[] _modifierKeys;
         private readonly Timer _rotationTimer = new Timer(Properties.Settings.Default.MinTimeBetweenProcessing);
         private readonly Semaphore _semaphore = new Semaphore(1, 1);
         private readonly Random _timerRandom = new Random();
@@ -57,6 +59,13 @@ namespace RotationHelper.ViewModel
 
         public MainWindowViewModel(MainWindow mainWindow)
         {
+            var modifierKeys = new List<VirtualKeyCode?>();
+            foreach (var modifierKey in Properties.Settings.Default.ModifierKeys)
+            {
+                if (Enum.TryParse(modifierKey, out VirtualKeyCode parsedModifierKey)) modifierKeys.Add(parsedModifierKey);
+            }
+            _modifierKeys = modifierKeys.ToArray();
+
             MainWindow = mainWindow;
             LoggingTextBox = mainWindow.ScrollingTextBox;
 
@@ -341,9 +350,9 @@ namespace RotationHelper.ViewModel
 
             Thread.Sleep(_timerRandom.Next(0, Properties.Settings.Default.MaxTimeBetweenProcessing - Properties.Settings.Default.MinTimeBetweenProcessing));
 
-            var modifiers = new VirtualKeyCode?[] { VirtualKeyCode.CONTROL, VirtualKeyCode.SHIFT, VirtualKeyCode.MENU };
+            
             // ReSharper disable once PossibleInvalidOperationException
-            var keyDownModifier = modifiers.FirstOrDefault(x => InputSimulator.InputDeviceState.IsHardwareKeyDown(x.Value));
+            var keyDownModifier = _modifierKeys.FirstOrDefault(x => InputSimulator.InputDeviceState.IsHardwareKeyDown(x.Value));
 
             if (keyDownModifier != null) LogText($"{keyDownModifier.Value} key is physically pressed, please release it!{Environment.NewLine}", true);
             else
