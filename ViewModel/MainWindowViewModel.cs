@@ -380,21 +380,13 @@ namespace RotationHelper.ViewModel
 
                         if (!key.NeedMouseClick) continue;
 
-                        while (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON) || InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON))
-                        {
-                            Thread.Sleep(_timerRandom.Next(Properties.Settings.Default.MinTimeBetweenKeyPressAndMouseClick, Properties.Settings.Default.MaxTimeBetweenKeyPressAndMouseClick));
-                        }
-
-                        var cursorPosition = Cursor.Position;
-                        var primaryScreen = Screen.PrimaryScreen.Bounds;
-                        cursorPosition.X = cursorPosition.X > primaryScreen.Width ? primaryScreen.Width / 2 : cursorPosition.X;
-                        cursorPosition.Y = cursorPosition.Y > primaryScreen.Height ? primaryScreen.Height / 2 : cursorPosition.Y;
+                        if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON))
+                            InputSimulator.Mouse.LeftButtonUp();
+                        else if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.RBUTTON))
+                            InputSimulator.Mouse.RightButtonUp();
 
                         InputSimulator.Mouse.MoveMouseTo(65535 / 2.0, 65535 / 2.0);
-                        Thread.Sleep(_timerRandom.Next(Properties.Settings.Default.MinTimeBetweenMouseMove, Properties.Settings.Default.MaxTimeBetweenMouseMove));
                         InputSimulator.Mouse.LeftButtonClick();
-                        Thread.Sleep(_timerRandom.Next(Properties.Settings.Default.MinTimeBetweenMouseMove, Properties.Settings.Default.MaxTimeBetweenMouseMove));
-                        InputSimulator.Mouse.MoveMouseTo(cursorPosition.X * 65535.0 / primaryScreen.Width, cursorPosition.Y * 65535.0 / primaryScreen.Height);
                     }
                 }
             }
