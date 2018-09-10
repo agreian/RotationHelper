@@ -190,9 +190,12 @@ namespace RotationHelper.ViewModel
 
         private void RemoveKeyAction()
         {
-            if (SelectedKeyCommand == null) return;
+            if (SelectedKeyCommand == null || SelectedRotation == null) return;
 
-            SelectedRotation?.KeyCommands.Remove(SelectedKeyCommand);
+            var oldIndex = SelectedRotation.KeyCommands.IndexOf(SelectedKeyCommand);
+
+            SelectedRotation.KeyCommands.Remove(SelectedKeyCommand);
+            if (SelectedRotation.KeyCommands.Count > 0) SelectedKeyCommand = SelectedRotation.KeyCommands.ElementAt(oldIndex >= SelectedRotation.KeyCommands.Count ? oldIndex - 1 : oldIndex);
         }
 
         private void RemoveRotationAction()

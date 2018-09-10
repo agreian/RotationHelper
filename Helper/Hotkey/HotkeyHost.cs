@@ -13,10 +13,12 @@ namespace RotationHelper.Helper.Hotkey
     /// </summary>
     public sealed class HotkeyHost : IDisposable
     {
+
         #region Types
 
         public class SerialCounter
         {
+
             #region Constructors
 
             public SerialCounter(int start)
@@ -34,12 +36,17 @@ namespace RotationHelper.Helper.Hotkey
 
             #region Methods
 
+            #region Public Methods
+
             public int Next()
             {
                 return ++Current;
             }
 
             #endregion
+
+            #endregion
+
         }
 
         #endregion
@@ -113,11 +120,7 @@ namespace RotationHelper.Helper.Hotkey
 
         #region Methods
 
-        [DllImport("user32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-        private static extern int RegisterHotKey(IntPtr hwnd, int id, int modifiers, int key);
-
-        [DllImport("user32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
-        private static extern int UnregisterHotKey(IntPtr hwnd, int id);
+        #region Public Methods
 
         /// <summary>
         ///     Adds an Hotkey.
@@ -149,23 +152,30 @@ namespace RotationHelper.Helper.Hotkey
                 if (kvPair.Value.Enabled) UnregisterHotKey(kvPair.Key);
                 return _hotKeys.Remove(kvPair.Key);
             }
+
             return false;
         }
+
+        #endregion
+
+        #region Private Methods
+
+        [DllImport("user32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+        private static extern int RegisterHotKey(IntPtr hwnd, int id, int modifiers, int key);
+
+        [DllImport("user32", CharSet = CharSet.Ansi, SetLastError = true, ExactSpelling = true)]
+        private static extern int UnregisterHotKey(IntPtr hwnd, int id);
 
         private void Dispose(bool disposing)
         {
             if (_disposed) return;
 
-            if (disposing)
-            {
-                _hwndSource.RemoveHook(_hook);
-            }
+            if (disposing) _hwndSource.RemoveHook(_hook);
 
             for (var i = _hotKeys.Count - 1; i >= 0; i--)
             {
                 RemoveHotKey(_hotKeys.Values.ElementAt(i));
             }
-
 
             _disposed = true;
         }
@@ -235,5 +245,8 @@ namespace RotationHelper.Helper.Hotkey
         }
 
         #endregion
+
+        #endregion
+
     }
 }

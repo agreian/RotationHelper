@@ -4,6 +4,7 @@ namespace RotationHelper.Helper.Hotkey
 {
     public class HotkeyEventArgs : EventArgs
     {
+
         #region Constructors
 
         public HotkeyEventArgs(Hotkey hotkey)
@@ -15,8 +16,9 @@ namespace RotationHelper.Helper.Hotkey
 
         #region Properties
 
-        public Hotkey Hotkey { get; private set; }
+        public Hotkey Hotkey { get; }
 
         #endregion
+
     }
 }

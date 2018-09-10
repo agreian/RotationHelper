@@ -6,6 +6,7 @@ namespace RotationHelper.Helper.Hotkey
     [Serializable]
     public class HotkeyAlreadyRegisteredException : Exception
     {
+
         #region Constructors
 
         public HotkeyAlreadyRegisteredException(string message, Hotkey hotkey)
@@ -29,8 +30,9 @@ namespace RotationHelper.Helper.Hotkey
 
         #region Properties
 
-        public Hotkey Hotkey { get; private set; }
+        public Hotkey Hotkey { get; }
 
         #endregion
+
     }
 }

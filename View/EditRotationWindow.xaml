@@ -56,7 +56,7 @@
                 <Button DockPanel.Dock="Left" Margin="5,0,5,5" Content="Move down" Command="{Binding MoveDownCommand}" />
                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" TextAlignment="Right" Text="{Binding MousePixelColor}" />
             </DockPanel>
-            <DataGrid DockPanel.Dock="Bottom" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False"
+            <DataGrid DockPanel.Dock="Bottom" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False" CanUserSortColumns="False"
                       CanUserResizeRows="False" HeadersVisibility="Column" SelectionMode="Single" SelectedItem="{Binding SelectedKeyCommand}" ItemsSource="{Binding SelectedRotation.KeyCommands}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="100" />

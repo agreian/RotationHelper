@@ -8,6 +8,7 @@ namespace RotationHelper.Model
     [Serializable]
     public class Rotation : INotifyPropertyChanged
     {
+
         #region Fields
 
         private string _title;
@@ -29,7 +30,7 @@ namespace RotationHelper.Model
 
         public string Title
         {
-            get { return _title; }
+            get => _title;
             set
             {
                 _title = value;
@@ -47,11 +48,16 @@ namespace RotationHelper.Model
 
         #region Methods
 
+        #region Protected Methods
+
         protected virtual void RaisePropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion
+
+        #endregion
+
     }
 }

@@ -8,7 +8,6 @@ using System.Media;
 using System.Threading;
 using System.Timers;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 
@@ -388,7 +387,7 @@ namespace RotationHelper.ViewModel
             // We want to save the screenshot time if a modifier key is pressed
             if (CheckIfAModifierKeyIsPressed() == false)
             {
-                if (SelectedRotation.KeyCommands.Count == 0) LogText($"Selected rotation has no configured key, please edit it!", true);
+                if (SelectedRotation.KeyCommands.Count == 0) LogText("Selected rotation has no configured key, please edit it!", true);
 
                 var points = SelectedRotation.KeyCommands.Select(x => new Point(x.X, x.Y)).Distinct().ToArray();
 

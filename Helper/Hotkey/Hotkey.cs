@@ -6,11 +6,21 @@ using System.Windows.Input;
 namespace RotationHelper.Helper.Hotkey
 {
     /// <summary>
-    /// Represents an Hotkey
+    ///     Represents an Hotkey
     /// </summary>
     [Serializable]
     public class Hotkey : INotifyPropertyChanged, ISerializable, IEquatable<Hotkey>
     {
+
+        #region Events
+
+        /// <summary>
+        ///     Will be raised if the hotkey is pressed (works only if registed in HotkeyHost)
+        /// </summary>
+        public event EventHandler<HotkeyEventArgs> HotKeyPressed;
+
+        #endregion
+
         #region Fields
 
         private bool _enabled;
@@ -22,23 +32,24 @@ namespace RotationHelper.Helper.Hotkey
         #region Constructors
 
         /// <summary>
-        /// Creates an Hotkey object. This instance has to be registered in an HotkeyHost.
+        ///     Creates an Hotkey object. This instance has to be registered in an HotkeyHost.
         /// </summary>
         public Hotkey()
         {
         }
 
         /// <summary>
-        /// Creates an Hotkey object. This instance has to be registered in an HotkeyHost.
+        ///     Creates an Hotkey object. This instance has to be registered in an HotkeyHost.
         /// </summary>
         /// <param name="key">The key</param>
         /// <param name="modifiers">The modifier. Multiple modifiers can be combined with or.</param>
-        public Hotkey(Key key, ModifierKeys modifiers) : this(key, modifiers, true)
+        public Hotkey(Key key, ModifierKeys modifiers)
+            : this(key, modifiers, true)
         {
         }
 
         /// <summary>
-        /// Creates an Hotkey object. This instance has to be registered in an HotkeyHost.
+        ///     Creates an Hotkey object. This instance has to be registered in an HotkeyHost.
         /// </summary>
         /// <param name="key">The key</param>
         /// <param name="modifiers">The modifier. Multiple modifiers can be combined with or.</param>
@@ -52,19 +63,10 @@ namespace RotationHelper.Helper.Hotkey
 
         protected Hotkey(SerializationInfo info, StreamingContext context)
         {
-            Key = (Key) info.GetValue("Key", typeof (Key));
-            Modifiers = (ModifierKeys) info.GetValue("Modifiers", typeof (ModifierKeys));
+            Key = (Key)info.GetValue("Key", typeof(Key));
+            Modifiers = (ModifierKeys)info.GetValue("Modifiers", typeof(ModifierKeys));
             Enabled = info.GetBoolean("Enabled");
         }
-
-        #endregion
-
-        #region Events
-
-        /// <summary>
-        /// Will be raised if the hotkey is pressed (works only if registed in HotkeyHost)
-        /// </summary>
-        public event EventHandler<HotkeyEventArgs> HotKeyPressed;
 
         #endregion
 
@@ -72,7 +74,7 @@ namespace RotationHelper.Helper.Hotkey
 
         public bool Enabled
         {
-            get { return _enabled; }
+            get => _enabled;
             set
             {
                 if (value != _enabled)
@@ -83,13 +85,12 @@ namespace RotationHelper.Helper.Hotkey
             }
         }
 
-
         /// <summary>
-        /// The Key. Must not be null when registering to an HotkeyHost.
+        ///     The Key. Must not be null when registering to an HotkeyHost.
         /// </summary>
         public Key Key
         {
-            get { return _key; }
+            get => _key;
             set
             {
                 if (_key != value)
@@ -101,11 +102,11 @@ namespace RotationHelper.Helper.Hotkey
         }
 
         /// <summary>
-        /// The modifier. Multiple modifiers can be combined with or.
+        ///     The modifier. Multiple modifiers can be combined with or.
         /// </summary>
         public ModifierKeys Modifiers
         {
-            get { return _modifiers; }
+            get => _modifiers;
             set
             {
                 if (_modifiers != value)
@@ -114,6 +115,15 @@ namespace RotationHelper.Helper.Hotkey
                     RaisePropertyChanged("Modifiers");
                 }
             }
+        }
+
+        #endregion
+
+        #region IEquatable<Hotkey> Members
+
+        public bool Equals(Hotkey other)
+        {
+            return other != null && Key == other.Key && Modifiers == other.Modifiers;
         }
 
         #endregion
@@ -128,21 +138,14 @@ namespace RotationHelper.Helper.Hotkey
 
         public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
         {
-            info.AddValue("Key", Key, typeof (Key));
-            info.AddValue("Modifiers", Modifiers, typeof (ModifierKeys));
+            info.AddValue("Key", Key, typeof(Key));
+            info.AddValue("Modifiers", Modifiers, typeof(ModifierKeys));
             info.AddValue("Enabled", Enabled);
         }
 
         #endregion
 
-        #region IEquatable<Hotkey> Members
-
-        public bool Equals(Hotkey other)
-        {
-            return other != null && Key == other.Key && Modifiers == other.Modifiers;
-        }
-
-        #endregion
+        #region Methods
 
         #region Public Methods
 
@@ -154,7 +157,7 @@ namespace RotationHelper.Helper.Hotkey
 
         public override int GetHashCode()
         {
-            return (int) Modifiers + 10*(int) Key;
+            return (int)Modifiers + 10 * (int)Key;
         }
 
         public override string ToString()
@@ -164,12 +167,16 @@ namespace RotationHelper.Helper.Hotkey
 
         #endregion
 
-        #region Private Methods
+        #region Internal Methods
 
         internal void RaiseOnHotKeyPressed()
         {
             RaiseHotKeyPress();
         }
+
+        #endregion
+
+        #region Protected Methods
 
         protected virtual void RaiseHotKeyPress()
         {
@@ -182,5 +189,8 @@ namespace RotationHelper.Helper.Hotkey
         }
 
         #endregion
+
+        #endregion
+
     }
 }

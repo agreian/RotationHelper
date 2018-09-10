@@ -4,18 +4,22 @@ using System.Drawing.Text;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Windows.Forms;
+
 using RotationHelper.Model;
 using RotationHelper.ViewModel;
+
 using Timer = System.Timers.Timer;
 
 namespace RotationHelper
 {
     public partial class Overlay
     {
+
         #region Enums
 
         public enum GetWindowLongConst
         {
+
             GwlWndproc = -4,
             GwlHinstance = -6,
             GwlHwndparent = -8,
@@ -23,19 +27,24 @@ namespace RotationHelper
             GwlExstyle = -20,
             GwlUserdata = -21,
             GwlId = -12
+
         }
 
         public enum Lwa
         {
+
             ColorKey = 0x1,
             Alpha = 0x2
+
         }
 
         [Flags]
         private enum WindowStyles : uint
         {
+
             WsExTransparent = 0x00000020,
             WsExLayered = 0x00080000
+
         }
 
         #endregion
@@ -77,6 +86,8 @@ namespace RotationHelper
 
         #region Methods
 
+        #region Public Methods
+
         /// <summary>
         ///     Finds the Size of all computer screens combined (assumes screens are left to right, not above and below).
         /// </summary>
@@ -97,18 +108,6 @@ namespace RotationHelper
 
         [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
         public static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int y, int cx, int cy, int wFlags);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-        [DllImport("user32.dll")]
-        private static extern int SendMessage(IntPtr hWnd, uint wMsg, UIntPtr wParam, IntPtr lParam); //used for maximizing the screen
-
-        [DllImport("user32.dll")]
-        private static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
-
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
         /// <summary>
         ///     Make the form (specified by its handle) a window that supports transparency.
@@ -132,6 +131,22 @@ namespace RotationHelper
 
             TransparencyKey = Color.White;
         }
+
+        #endregion
+
+        #region Private Methods
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, uint wMsg, UIntPtr wParam, IntPtr lParam); //used for maximizing the screen
+
+        [DllImport("user32.dll")]
+        private static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
         private void DrawBackgroundWorkerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
         {
@@ -160,5 +175,8 @@ namespace RotationHelper
         }
 
         #endregion
+
+        #endregion
+
     }
 }

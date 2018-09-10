@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
+
 using Color = System.Windows.Media.Color;
 
 namespace RotationHelper.Helper
 {
     internal class ScreenshotHelper
     {
+
         #region Fields
 
         private static readonly List<Color> _colors = new List<Color>();
@@ -15,6 +17,8 @@ namespace RotationHelper.Helper
         #endregion
 
         #region Methods
+
+        #region Public Methods
 
         public static Color[] GetColorAt(params Point[] points)
         {
@@ -26,7 +30,7 @@ namespace RotationHelper.Helper
             foreach (var point in points)
             {
                 var pixel = (int)GetPixel(windowDc, point.X, point.Y);
-                _colors.Add(Color.FromArgb(255, (byte)((pixel >> 0) & 0xFF), (byte)((pixel >> 8) & 0xFF), (byte)((pixel >> 16) & 0xFF)));
+                _colors.Add(Color.FromArgb(255, (byte)(pixel >> 0 & 0xFF), (byte)(pixel >> 8 & 0xFF), (byte)(pixel >> 16 & 0xFF)));
             }
 
             ReleaseDC(desktopWindow, windowDc);
@@ -47,5 +51,8 @@ namespace RotationHelper.Helper
         public static extern int ReleaseDC(IntPtr window, IntPtr dc);
 
         #endregion
+
+        #endregion
+
     }
 }

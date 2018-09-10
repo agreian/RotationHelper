@@ -9,6 +9,7 @@ namespace RotationHelper.Model
     [Serializable]
     public class RotationHelperFile
     {
+
         #region Constructors
 
         public RotationHelperFile()
@@ -27,6 +28,8 @@ namespace RotationHelper.Model
         #endregion
 
         #region Methods
+
+        #region Public Methods
 
         public static RotationHelperFile Deserialize(string path)
         {
@@ -73,5 +76,8 @@ namespace RotationHelper.Model
         }
 
         #endregion
+
+        #endregion
+
     }
 }

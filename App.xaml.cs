@@ -10,6 +10,7 @@ namespace RotationHelper
     /// </summary>
     public partial class App
     {
+
         #region Fields
 
         private JumpList _jumpList;
@@ -24,6 +25,8 @@ namespace RotationHelper
 
         #region Methods
 
+        #region Public Methods
+
         public static void AddRecentFile(string path)
         {
             var jumpList = JumpList.GetJumpList(Current);
@@ -33,29 +36,37 @@ namespace RotationHelper
             var programLocation = Assembly.GetCallingAssembly().Location;
             if (path.IndexOf(' ') != -1) path = $"\"{path}\"";
 
-            var jumpTask = new JumpTask { ApplicationPath = programLocation, Arguments = path, Description = path, IconResourcePath = programLocation, Title = title };
+            var jumpTask = new JumpTask
+            {
+                ApplicationPath = programLocation,
+                Arguments = path,
+                Description = path,
+                IconResourcePath = programLocation,
+                Title = title
+            };
             JumpList.AddToRecentCategory(jumpTask);
 
             jumpList.Apply();
         }
 
+        #endregion
+
+        #region Protected Methods
+
         protected override void OnStartup(StartupEventArgs e)
         {
             string path = null;
-            if (e.Args.Length > 0)
-            {
-                path = e.Args[0];
-            }
+            if (e.Args.Length > 0) path = e.Args[0];
 
-            if (path != null && File.Exists(path))
-            {
-                FileToOpen = path;
-            }
+            if (path != null && File.Exists(path)) FileToOpen = path;
 
             _jumpList = new JumpList { ShowRecentCategory = true };
             JumpList.SetJumpList(Current, _jumpList);
         }
 
         #endregion
+
+        #endregion
+
     }
 }
