@@ -11,7 +11,7 @@
     <Grid>
         <Grid.Resources>
             <Style TargetType="Button">
-                <Setter Property="MinWidth" Value="80" />
+                <Setter Property="MinWidth" Value="60" />
                 <Setter Property="Padding" Value="5,2" />
             </Style>
         </Grid.Resources>
@@ -50,8 +50,10 @@
 
         <DockPanel Margin="10" Grid.Row="3">
             <DockPanel DockPanel.Dock="Top">
-                <Button DockPanel.Dock="Left" Margin="0,0,5,5" Content="Add Key" Command="{Binding AddKeyCommand}" />
-                <Button DockPanel.Dock="Left" Margin="5,0,5,5" Content="Remove Key" Command="{Binding RemoveKeyCommand}" />
+                <Button DockPanel.Dock="Left" Margin="0,0,5,5" Content="Add" Command="{Binding AddKeyCommand}" />
+                <Button DockPanel.Dock="Left" Margin="5,0,5,5" Content="Remove" Command="{Binding RemoveKeyCommand}" />
+                <Button DockPanel.Dock="Left" Margin="5,0,5,5" Content="Move up" Command="{Binding MoveUpCommand}" />
+                <Button DockPanel.Dock="Left" Margin="5,0,5,5" Content="Move down" Command="{Binding MoveDownCommand}" />
                 <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" TextAlignment="Right" Text="{Binding MousePixelColor}" />
             </DockPanel>
             <DataGrid DockPanel.Dock="Bottom" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeColumns="False"

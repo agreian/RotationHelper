@@ -101,7 +101,7 @@
     </Compile>
     <Compile Include="Model\RotationHelperFile.cs" />
     <Compile Include="Helper\ScreenshotHelper.cs" />
-    <Compile Include="View\ScrollingTextBox.cs" />
+    <Compile Include="View\LoggingListBox.cs" />
     <Page Include="View\EditRotationWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

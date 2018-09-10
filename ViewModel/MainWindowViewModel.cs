@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -7,29 +8,32 @@ using System.Media;
 using System.Threading;
 using System.Timers;
 using System.Windows;
-using System.Windows.Forms;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+
 using WindowsInput;
 using WindowsInput.Native;
+
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
+
+using Microsoft.Win32;
+
 using RotationHelper.Helper;
 using RotationHelper.Helper.Hotkey;
 using RotationHelper.Model;
+using RotationHelper.Properties;
 using RotationHelper.View;
-using Application = System.Windows.Application;
-using Cursor = System.Windows.Forms.Cursor;
-using MessageBox = System.Windows.MessageBox;
-using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+
 using Point = System.Drawing.Point;
-using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 using Timer = System.Timers.Timer;
 
 namespace RotationHelper.ViewModel
 {
     public class MainWindowViewModel : ViewModelBase
     {
+
         #region Constants
 
         private const string DEFAULT_EXT = ".rotation";
@@ -40,7 +44,7 @@ namespace RotationHelper.ViewModel
         #region Fields
 
         private readonly VirtualKeyCode?[] _modifierKeys;
-        private readonly Timer _rotationTimer = new Timer(Properties.Settings.Default.MinTimeBetweenProcessing);
+        private readonly Timer _rotationTimer = new Timer(Settings.Default.MinTimeBetweenProcessing);
         private readonly Semaphore _semaphore = new Semaphore(1, 1);
         private readonly Random _timerRandom = new Random();
 
@@ -60,14 +64,14 @@ namespace RotationHelper.ViewModel
         public MainWindowViewModel(MainWindow mainWindow)
         {
             var modifierKeys = new List<VirtualKeyCode?>();
-            foreach (var modifierKey in Properties.Settings.Default.ModifierKeys)
+            foreach (var modifierKey in Settings.Default.ModifierKeys)
             {
                 if (Enum.TryParse(modifierKey, out VirtualKeyCode parsedModifierKey)) modifierKeys.Add(parsedModifierKey);
             }
+
             _modifierKeys = modifierKeys.ToArray();
 
             MainWindow = mainWindow;
-            LoggingTextBox = mainWindow.ScrollingTextBox;
 
             NewCommand = new RelayCommand(NewAction, NewCanAction);
             LoadCommand = new RelayCommand(LoadAction, LoadCanAction);
@@ -104,16 +108,18 @@ namespace RotationHelper.ViewModel
 
         public bool IsRotationStarted
         {
-            get { return _isRotationStarted; }
+            get => _isRotationStarted;
             set
             {
                 _isRotationStarted = value;
                 RaisePropertyChanged(() => StartStopContent);
-                RaisePropertyChanged(() => IsRotationStoped);
+                RaisePropertyChanged(() => IsRotationStopped);
             }
         }
 
-        public bool IsRotationStoped => !IsRotationStarted;
+        public bool IsRotationStopped => !IsRotationStarted;
+
+        public ObservableCollection<string> ListBoxItems { get; } = new ObservableCollection<string>();
 
         public RelayCommand LoadCommand { get; }
 
@@ -121,7 +127,7 @@ namespace RotationHelper.ViewModel
 
         public string LoadedFilePath
         {
-            get { return _loadedFilePath; }
+            get => _loadedFilePath;
             set
             {
                 _loadedFilePath = value;
@@ -135,14 +141,13 @@ namespace RotationHelper.ViewModel
                         {
                             fileStream2.CopyTo(memoryStream);
                         }
+
                         _loadedFileByteArray = memoryStream.ToArray();
                     }
                 }
                 else _loadedFileByteArray = null;
             }
         }
-
-        public ScrollingTextBox LoggingTextBox { get; }
 
         public MainWindow MainWindow { get; }
 
@@ -154,7 +159,7 @@ namespace RotationHelper.ViewModel
 
         public Rotation SelectedRotation
         {
-            get { return StaticSelectedRotation; }
+            get => StaticSelectedRotation;
             set
             {
                 StaticSelectedRotation = value;
@@ -172,9 +177,27 @@ namespace RotationHelper.ViewModel
 
         #region Methods
 
+        #region Private Methods
+
         private static void DispatcherBeginInvoke(Action action)
         {
             Application.Current.Dispatcher.BeginInvoke(action);
+        }
+
+        /// <summary>
+        ///     Check if a modifier key is currently physically pressed
+        /// </summary>
+        /// <returns>True if a modifier key is pressed, false otherwise</returns>
+        private bool CheckIfAModifierKeyIsPressed()
+        {
+            var keyDownModifier = _modifierKeys.FirstOrDefault(x => InputSimulator.InputDeviceState.IsHardwareKeyDown(x.Value));
+            if (keyDownModifier != null)
+            {
+                LogText($"{keyDownModifier.Value} key is physically pressed, please release it!", true);
+                return true;
+            }
+
+            return false;
         }
 
         private void EditAction()
@@ -213,7 +236,10 @@ namespace RotationHelper.ViewModel
                 if (byteArray.Length != _loadedFileByteArray.Length) return true;
 
                 // ReSharper disable once LoopCanBeConvertedToQuery
-                for (var i = 0; i < byteArray.Length; ++i) if (byteArray[i] != _loadedFileByteArray[i]) return true;
+                for (var i = 0; i < byteArray.Length; ++i)
+                {
+                    if (byteArray[i] != _loadedFileByteArray[i]) return true;
+                }
 
                 return false;
             }
@@ -265,7 +291,15 @@ namespace RotationHelper.ViewModel
             if (dontRepeat && _lastText == text) return;
             _lastText = text;
 
-            DispatcherBeginInvoke(() => LoggingTextBox.AppendText(text));
+            DispatcherBeginInvoke(() =>
+            {
+                while (ListBoxItems.Count > 1000)
+                {
+                    ListBoxItems.RemoveAt(0);
+                }
+
+                ListBoxItems.Add(text);
+            });
         }
 
         private void MainWindowOnClosing(object sender, CancelEventArgs cancelEventArgs)
@@ -348,16 +382,13 @@ namespace RotationHelper.ViewModel
 
             _rotationTimer.Stop();
 
-            Thread.Sleep(_timerRandom.Next(0, Properties.Settings.Default.MaxTimeBetweenProcessing - Properties.Settings.Default.MinTimeBetweenProcessing));
+            Thread.Sleep(_timerRandom.Next(0, Settings.Default.MaxTimeBetweenProcessing - Settings.Default.MinTimeBetweenProcessing));
 
-            
             // ReSharper disable once PossibleInvalidOperationException
-            var keyDownModifier = _modifierKeys.FirstOrDefault(x => InputSimulator.InputDeviceState.IsHardwareKeyDown(x.Value));
-
-            if (keyDownModifier != null) LogText($"{keyDownModifier.Value} key is physically pressed, please release it!{Environment.NewLine}", true);
-            else
+            // We want to save the screenshot time if a modifier key is pressed
+            if (CheckIfAModifierKeyIsPressed() == false)
             {
-                if (SelectedRotation.KeyCommands.Count == 0) LogText($"Selected rotation has no configured key, please edit it!{Environment.NewLine}", true);
+                if (SelectedRotation.KeyCommands.Count == 0) LogText($"Selected rotation has no configured key, please edit it!", true);
 
                 var points = SelectedRotation.KeyCommands.Select(x => new Point(x.X, x.Y)).Distinct().ToArray();
 
@@ -366,24 +397,23 @@ namespace RotationHelper.ViewModel
                 foreach (var color in colors)
                 {
                     var keys = SelectedRotation.KeyCommands.Where(x => x.Color.AreEquivalent(color)).ToArray();
-                    if (keys.Length == 0)
-                    {
-                        LogText($"Color {color} detected, no key attached{Environment.NewLine}", true);
-                    }
+                    if (keys.Length == 0) LogText($"Color {color} detected, no key attached", true);
 
                     foreach (var key in keys)
                     {
-                        LogText($"Color {color} detected, pressing {(key.ModifierKey != null ? key.ModifierKey + "+" + key.Key : key.Key.ToString())} ({key.Name}){Environment.NewLine}");
+                        if (CheckIfAModifierKeyIsPressed()) continue; // The second check if for ensuring that a modifier key has not been pressed during screenshot procedure
+
+                        LogText($"Color {color} detected, pressing {(key.ModifierKey != null ? key.ModifierKey + "+" + key.Key : key.Key.ToString())} ({key.Name})");
 
                         if (key.ModifierKey == null) KeyPress(key.Key);
                         else KeyPress(key.ModifierKey.Value, key.Key);
 
-                        if (!key.NeedMouseClick) continue;
+                        if (key.NeedMouseClick == false) continue;
 
-                        if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON))
-                            InputSimulator.Mouse.LeftButtonUp();
-                        else if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.RBUTTON))
-                            InputSimulator.Mouse.RightButtonUp();
+                        Thread.Sleep(_timerRandom.Next(Settings.Default.MinTimeBetweenKeyPressAndMouseClick, Settings.Default.MaxTimeBetweenKeyPressAndMouseClick));
+
+                        if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.LBUTTON)) InputSimulator.Mouse.LeftButtonUp();
+                        else if (InputSimulator.InputDeviceState.IsHardwareKeyDown(VirtualKeyCode.RBUTTON)) InputSimulator.Mouse.RightButtonUp();
 
                         InputSimulator.Mouse.MoveMouseTo(65535 / 2.0, 65535 / 2.0);
                         InputSimulator.Mouse.LeftButtonClick();
@@ -465,5 +495,8 @@ namespace RotationHelper.ViewModel
         }
 
         #endregion
+
+        #endregion
+
     }
 }

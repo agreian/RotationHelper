@@ -14,12 +14,6 @@
     <Setting Name="MaxTimeBetweenKeyPressAndMouseClick" Type="System.UInt16" Scope="User">
       <Value Profile="(Default)">200</Value>
     </Setting>
-    <Setting Name="MinTimeBetweenMouseMove" Type="System.UInt16" Scope="User">
-      <Value Profile="(Default)">40</Value>
-    </Setting>
-    <Setting Name="MaxTimeBetweenMouseMove" Type="System.UInt16" Scope="User">
-      <Value Profile="(Default)">60</Value>
-    </Setting>
     <Setting Name="ModifierKeys" Type="System.Collections.Specialized.StringCollection" Scope="User">
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
